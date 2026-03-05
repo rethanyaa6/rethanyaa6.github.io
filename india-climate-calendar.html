@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🇮🇳 India's Weather Calendar for Kids!</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100vh; background: #1a0a2e; }
+    #root { min-height: 100vh; }
+
+    @keyframes floatUp0 {
+      0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+      100% { transform: translateY(-110vh) rotate(180deg) scale(0.4); opacity: 0; }
+    }
+    @keyframes floatUp1 {
+      0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+      100% { transform: translateY(-100vh) rotate(-270deg) scale(0.3); opacity: 0; }
+    }
+    @keyframes floatUp2 {
+      0%   { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-120vh) scale(0.2); opacity: 0; }
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: scale(0.85) translateY(20px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes bounce {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-10px); }
+    }
+    @keyframes rainFall {
+      0%   { transform: translateY(-20px); opacity: 0; }
+      20%  { opacity: 1; }
+      100% { transform: translateY(60px); opacity: 0; }
+    }
+    @keyframes shimmer {
+      0%,100% { opacity: 0.7; }
+      50%      { opacity: 1; }
+    }
+    @keyframes gradFlow {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes popIn {
+      from { transform: translate(-50%,-50%) scale(0.5) rotate(-8deg); opacity: 0; }
+      to   { transform: translate(-50%,-50%) scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .app {
+      min-height: 100vh;
+      font-family: 'Poppins', sans-serif;
+      position: relative;
+      overflow-x: hidden;
+      transition: background 0.8s;
+    }
+    .header {
+      text-align: center;
+      padding: 1.5rem 1rem 0.5rem;
+      position: relative;
+      z-index: 10;
+    }
+    .main-title {
+      font-family: 'Baloo 2', cursive;
+      font-size: clamp(1.8rem, 6vw, 3.4rem);
+      font-weight: 800;
+      color: white;
+      text-shadow: 3px 3px 0 rgba(0,0,0,0.2), 0 0 40px rgba(255,255,255,0.3);
+      line-height: 1.1;
+      margin-bottom: 0.2rem;
+    }
+    .main-title span { animation: bounce 2s ease-in-out infinite; display: inline-block; }
+    .subtitle {
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.8);
+      background: rgba(0,0,0,0.2);
+      display: inline-block;
+      padding: 0.3rem 1rem;
+      border-radius: 99px;
+      backdrop-filter: blur(4px);
+    }
+    .season-strip {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding: 0.8rem 1rem 0.2rem;
+      position: relative;
+      z-index: 10;
+    }
+    .season-pill {
+      padding: 0.35rem 0.9rem;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      font-family: 'Baloo 2', cursive;
+      border: 2px solid rgba(255,255,255,0.35);
+      color: white;
+      background: rgba(255,255,255,0.15);
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: all 0.2s;
+    }
+    .season-pill:hover, .season-pill.active {
+      background: rgba(255,255,255,0.35);
+      border-color: white;
+      transform: scale(1.08);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+    }
+    .month-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+      padding: 1rem 1.2rem 2rem;
+      max-width: 1300px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 5;
+    }
+    .month-card {
+      border-radius: 22px;
+      padding: 1.3rem;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      border: 3px solid rgba(255,255,255,0.25);
+      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s, border-color 0.2s;
+      animation: cardIn 0.4s ease backwards;
+    }
+    .month-card:hover {
+      transform: translateY(-8px) rotate(0.8deg);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      border-color: rgba(255,255,255,0.55);
+    }
+    .month-card.selected {
+      border-color: white;
+      box-shadow: 0 0 0 3px white, 0 16px 40px rgba(0,0,0,0.35);
+      transform: scale(1.02);
+    }
+    .card-glow {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.05);
+      pointer-events: none;
+      border-radius: 22px;
+    }
+    .month-emoji {
+      font-size: 2.8rem;
+      display: block;
+      text-align: center;
+      margin-bottom: 0.3rem;
+      animation: bounce 3s ease-in-out infinite;
+      filter: drop-shadow(2px 3px 6px rgba(0,0,0,0.25));
+    }
+    .month-name-en {
+      font-family: 'Baloo 2', cursive;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: white;
+      text-align: center;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      line-height: 1;
+    }
+    .month-name-hi {
+      text-align: center;
+      font-size: 1rem;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 0.7rem;
+      font-family: 'Baloo 2', cursive;
+    }
+    .temp-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 0.8rem;
+      flex-wrap: wrap;
+    }
+    .temp-badge {
+      background: rgba(0,0,0,0.25);
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 99px;
+      padding: 0.22rem 0.7rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: white;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    }
+    .festival-tag {
+      background: rgba(255,255,255,0.18);
+      border-radius: 10px;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: white;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.25);
+      margin-bottom: 0.6rem;
+      line-height: 1.3;
+    }
+    .mini-stat {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+      padding: 0.35rem 0.6rem;
+      margin-bottom: 0.4rem;
+    }
+    .stat-icon { font-size: 0.95rem; flex-shrink: 0; }
+    .stat-bar-track {
+      flex: 1;
+      height: 7px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .stat-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.5s ease;
+    }
+    .stat-val {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+      min-width: 36px;
+      text-align: right;
+    }
+    .rain-overlay {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none; overflow: hidden; border-radius: 22px;
+    }
+    .raindrop-anim {
+      position: absolute;
+      width: 2px; height: 14px;
+      background: rgba(150,210,255,0.55);
+      border-radius: 99px;
+      animation: rainFall 0.9s linear infinite;
+    }
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal {
+      width: min(520px, 96vw);
+      max-height: 90vh;
+      overflow-y: auto;
+      border-radius: 28px;
+      padding: 2rem 1.8rem 1.8rem;
+      position: relative;
+      border: 3px solid rgba(255,255,255,0.4);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+      animation: popIn 0.32s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .modal-emoji {
+      font-size: 4.5rem;
+      display: block;
+      text-align: center;
+      animation: bounce 2s ease-in-out infinite;
+      filter: drop-shadow(3px 4px 8px rgba(0,0,0,0.3));
+      margin-bottom: 0.4rem;
+    }
+    .modal-title {
+      font-family: 'Baloo 2', cursive;
+      font-size: 2rem;
+      font-weight: 800;
+      color: white;
+      text-align: center;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.25);
+    }
+    .modal-hindi {
+      text-align: center;
+      color: rgba(255,255,255,0.75);
+      font-size: 1.2rem;
+      font-family: 'Baloo 2', cursive;
+      margin-bottom: 0.8rem;
+    }
+    .modal-season {
+      display: block;
+      width: fit-content;
+      margin: 0 auto 1rem;
+      padding: 0.3rem 1rem;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.35);
+      color: white;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    .fact-box {
+      background: rgba(255,255,255,0.18);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 16px;
+      padding: 1rem;
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.55;
+      text-align: center;
+      margin-bottom: 0.9rem;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.25);
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      margin-bottom: 0.9rem;
+    }
+    .detail-tile {
+      background: rgba(0,0,0,0.2);
+      border: 1.5px solid rgba(255,255,255,0.2);
+      border-radius: 14px;
+      padding: 0.8rem;
+      text-align: center;
+    }
+    .tile-emoji { font-size: 1.6rem; display: block; margin-bottom: 0.25rem; }
+    .tile-val {
+      font-family: 'Baloo 2', cursive;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.25);
+      line-height: 1;
+    }
+    .tile-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.75);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-top: 0.15rem;
+    }
+    .region-row {
+      background: rgba(0,0,0,0.2);
+      border-radius: 14px;
+      padding: 0.8rem;
+      margin-bottom: 0.7rem;
+      border: 1.5px solid rgba(255,255,255,0.15);
+    }
+    .region-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.3rem;
+    }
+    .region-text {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: white;
+      line-height: 1.4;
+    }
+    .activity-box {
+      background: rgba(255,220,0,0.18);
+      border: 2px solid rgba(255,220,0,0.35);
+      border-radius: 14px;
+      padding: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+    .activity-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: rgba(255,220,0,0.9);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.3rem;
+    }
+    .activity-text {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: white;
+    }
+    .close-modal {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      font-family: 'Baloo 2', cursive;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.04em;
+    }
+    .close-modal:hover {
+      background: rgba(255,255,255,0.28);
+      border-color: white;
+    }
+    .india-deco {
+      position: fixed;
+      font-size: 14rem;
+      opacity: 0.04;
+      pointer-events: none;
+      bottom: -3rem;
+      right: -3rem;
+      z-index: 0;
+      animation: shimmer 4s ease-in-out infinite;
+    }
+    .floater {
+      position: fixed;
+      pointer-events: none;
+      z-index: 99;
+      bottom: -10%;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const MONTHS = [
+      {
+        name:"January", hindi:"जनवरी", emoji:"🪁",
+        season:"Winter", seasonEmoji:"🌨️",
+        bg:["#1a3a6e","#2a5fa8"],
+        temp:{north:"5–20°C", south:"22–32°C"},
+        rain:12, sun:7, humidity:60,
+        feel:"Cold & Crisp ❄️",
+        festivalName:"Makar Sankranti & Lohri", festivalEmoji:"🪁🔥",
+        fact:"Kite festivals fill the sky in Gujarat! Millions of colourful kites dance above Ahmedabad during Uttarayan.",
+        funFact:"🏏 Perfect cricket weather! All big matches happen now.",
+        northFact:"Delhi gets foggy — trains run late and schools open late!",
+        southFact:"Kerala & Tamil Nadu are warm and perfect for beaches!",
+        activity:"Fly kites, eat til-gur (sesame sweets), play cricket!",
+        crop:"🌾 Wheat is growing in Punjab fields",
+      },
+      {
+        name:"February", hindi:"फ़रवरी", emoji:"💐",
+        season:"Spring (Early)", seasonEmoji:"🌸",
+        bg:["#6b1a5f","#a83aa0"],
+        temp:{north:"8–24°C", south:"24–34°C"},
+        rain:15, sun:7, humidity:58,
+        feel:"Warming Up 🌸",
+        festivalName:"Vasant Panchami & Holi prep", festivalEmoji:"💛🎨",
+        fact:"Mustard fields in Punjab turn golden yellow — the whole landscape looks like it's painted in gold!",
+        funFact:"🌼 Saraswati Puja — students worship books and pens!",
+        northFact:"Kashmir gets heavy snowfall — perfect for skiing!",
+        southFact:"Summer slowly creeping in — mangoes start forming on trees!",
+        activity:"Visit mustard fields, prepare for Holi colours!",
+        crop:"🌼 Mustard flowers bloom bright yellow",
+      },
+      {
+        name:"March", hindi:"मार्च", emoji:"🎨",
+        season:"Spring", seasonEmoji:"🌈",
+        bg:["#8f2a1a","#cf5a20"],
+        temp:{north:"14–30°C", south:"26–36°C"},
+        rain:18, sun:8, humidity:55,
+        feel:"Festive & Colourful 🎨",
+        festivalName:"HOLI! 🎨", festivalEmoji:"🎨🌈",
+        fact:"HOLI — the most colourful day of the year! Everyone throws gulal powder and gets soaked in colours. Even strangers become friends!",
+        funFact:"🎵 Holi songs (Faag) are sung for weeks before the festival!",
+        northFact:"Vrindavan and Mathura have the most famous Holi celebrations!",
+        southFact:"Temperatures touch 36°C — summer is arriving fast!",
+        activity:"Play Holi! Drink thandai, eat gujiya sweets!",
+        crop:"🌾 Rabi harvest begins — wheat is ready!",
+      },
+      {
+        name:"April", hindi:"अप्रैल", emoji:"🥭",
+        season:"Summer", seasonEmoji:"☀️",
+        bg:["#8f5a00","#d4850a"],
+        temp:{north:"22–40°C", south:"30–38°C"},
+        rain:8, sun:10, humidity:40,
+        feel:"Getting Hot! 🌡️",
+        festivalName:"Baisakhi & Ram Navami", festivalEmoji:"💃🏾🕊️",
+        fact:"Baisakhi in Punjab — farmers celebrate the wheat harvest with Bhangra dancing! The most energetic festival you'll ever see!",
+        funFact:"🥭 Raw mangoes (keri) appear in markets — aam panna time!",
+        northFact:"Delhi hits 40°C — cooling centres open for people!",
+        southFact:"New Year for Tamil, Malayalam & Kannada people — Vishu & Ugadi!",
+        activity:"Do Bhangra, drink aam panna, visit gurudwaras!",
+        crop:"🌾 Wheat harvest! Farmers are very busy and happy!",
+      },
+      {
+        name:"May", hindi:"मई", emoji:"🍋",
+        season:"Peak Summer", seasonEmoji:"🔥",
+        bg:["#7f1a00","#c62828"],
+        temp:{north:"30–48°C", south:"32–42°C"},
+        rain:5, sun:11, humidity:35,
+        feel:"Very HOT! 🔥",
+        festivalName:"Summer Holidays!", festivalEmoji:"🏖️🍹",
+        fact:"Hottest month! Rajasthan can reach 50°C — hot enough to bake bread on the pavement! 'Loo' (hot wind) blows across North India.",
+        funFact:"🥭 Peak mango season! Alphonso, Dasheri, Langra — all arrive!",
+        northFact:"Schools are on SUMMER HOLIDAY — time for nani's house visits!",
+        southFact:"Kerala's pre-monsoon showers bring some relief!",
+        activity:"Eat mangoes all day, go to hills, drink lassi & sharbat!",
+        crop:"🥭 Mangoes ripening — most loved fruit season in India!",
+      },
+      {
+        name:"June", hindi:"जून", emoji:"⛈️",
+        season:"Monsoon Arrives!", seasonEmoji:"🌧️",
+        bg:["#0d1b4a","#1a3580"],
+        temp:{north:"28–40°C", south:"26–34°C"},
+        rain:120, sun:4, humidity:80,
+        feel:"Monsoon Magic! ⛈️",
+        festivalName:"Monsoon Arrives in Kerala!", festivalEmoji:"🌧️🌿",
+        fact:"The MONSOON arrives! First rains hit Kerala on June 1st every year — the whole country waits for this day. That smell of rain on dry earth is called PETRICHOR!",
+        funFact:"🐸 Frogs come out everywhere and sing all night — a frog concert!",
+        northFact:"Delhi gets the monsoon around June 25th — everyone celebrates!",
+        southFact:"Kerala becomes incredibly green — backwaters fill up beautifully!",
+        activity:"Dance in first rain, eat pakodas, paper boats in puddles!",
+        crop:"🌱 Farmers plant rice and kharif crops — fields turn green!",
+      },
+      {
+        name:"July", hindi:"जुलाई", emoji:"🌊",
+        season:"Monsoon", seasonEmoji:"🌧️",
+        bg:["#0a2040","#103060"],
+        temp:{north:"26–35°C", south:"24–32°C"},
+        rain:280, sun:3, humidity:88,
+        feel:"Wet & Green! 🌿",
+        festivalName:"Guru Purnima & Rath Yatra", festivalEmoji:"🙏🎡",
+        fact:"Rath Yatra in Puri, Odisha! Lord Jagannath's giant chariot (ratha) is pulled through streets by thousands of devotees — the wheels are taller than a house!",
+        funFact:"🌧️ Cherrapunji gets 10 metres of rain every year — wettest place on Earth!",
+        northFact:"Landslides in hills — but valleys become waterfalls everywhere!",
+        southFact:"Munnar and Coorg look like paradise — misty green hills!",
+        activity:"Visit hill stations, eat corn-on-cob, make paper boats!",
+        crop:"🌾 Rice paddies are bright green across Bengal and Assam!",
+      },
+      {
+        name:"August", hindi:"अगस्त", emoji:"🇮🇳",
+        season:"Monsoon", seasonEmoji:"🌧️",
+        bg:["#1b3a1e","#2d6030"],
+        temp:{north:"25–34°C", south:"24–31°C"},
+        rain:250, sun:3, humidity:86,
+        feel:"Patriotic & Rainy 🇮🇳",
+        festivalName:"Independence Day & Onam", festivalEmoji:"🇮🇳🌺",
+        fact:"INDEPENDENCE DAY on August 15th! The PM gives a speech from Red Fort. Every school has flag hoisting and students get sweets! Also — Onam in Kerala with snake boat races!",
+        funFact:"🪁 Red Fort has been the same flag hoisting spot since 1947!",
+        northFact:"Raksha Bandhan — sisters tie rakhis on brothers' wrists!",
+        southFact:"Onam Sadhya — a feast of 26 dishes served on a banana leaf!",
+        activity:"Hoist the flag, make rangoli with flowers, eat Onam feast!",
+        crop:"🌿 Paddy fields look like green carpet across the country!",
+      },
+      {
+        name:"September", hindi:"सितंबर", emoji:"🐘",
+        season:"Monsoon Retreat", seasonEmoji:"🌦️",
+        bg:["#3a0a5f","#6a1595"],
+        temp:{north:"24–34°C", south:"24–32°C"},
+        rain:170, sun:5, humidity:82,
+        feel:"Festive Season Begins! 🎉",
+        festivalName:"Ganesh Chaturthi!", festivalEmoji:"🐘✨",
+        fact:"GANESH CHATURTHI — massive elephant-headed God Ganesha clay idols are installed in homes and streets. Mumbai has the biggest celebration! After 10 days, idols are immersed in the sea.",
+        funFact:"🎵 Dhol drums play non-stop for 10 days during Ganesh festival!",
+        northFact:"Monsoon starts retreating from North India — skies clear!",
+        southFact:"Maharashtra and Goa go absolutely wild for Ganesh Chaturthi!",
+        activity:"Make Ganesha modak sweets, do puja, immerse the idol!",
+        crop:"🌾 Kharif harvest begins — rice and sorghum are ready!",
+      },
+      {
+        name:"October", hindi:"अक्टूबर", emoji:"🪔",
+        season:"Post-Monsoon", seasonEmoji:"🍂",
+        bg:["#5f2000","#9a3800"],
+        temp:{north:"18–32°C", south:"24–32°C"},
+        rain:45, sun:7, humidity:70,
+        feel:"Golden Festival Time! 🪔",
+        festivalName:"Navratri & Dussehra!", festivalEmoji:"💃🏾🏹",
+        fact:"NAVRATRI — 9 nights of Garba dancing! Everyone dresses in colourful chaniya cholis and dandiya sticks and dances in circles all night. Then Dussehra burns massive Ravana effigies!",
+        funFact:"🏹 Mysore Dasara — the most royal celebration in India with elephants!",
+        northFact:"Perfect weather — not too hot, not too cold. Best month!",
+        southFact:"Mysore palace is lit up with 100,000 lights — magical sight!",
+        activity:"Dance Garba, burn Ravana, eat Navratri fasting food!",
+        crop:"🌽 Corn and millet harvest across Rajasthan and Gujarat!",
+      },
+      {
+        name:"November", hindi:"नवंबर", emoji:"🪔",
+        season:"Winter Begins", seasonEmoji:"🌙",
+        bg:["#4a2800","#7a4500"],
+        temp:{north:"10–25°C", south:"22–30°C"},
+        rain:20, sun:8, humidity:65,
+        feel:"Diwali Magic! ✨",
+        festivalName:"DIWALI — Festival of Lights! 🪔", festivalEmoji:"🪔🎆",
+        fact:"DIWALI — the biggest festival in India! Millions of diyas (clay lamps) are lit everywhere. Fireworks light up the entire sky. Every home is decorated with rangoli and fairy lights!",
+        funFact:"🍬 Over 1 billion sweets (mithai) are eaten during Diwali week!",
+        northFact:"Delhi winters begin — sweaters out, foggy mornings, hot chai!",
+        southFact:"Karthigai Deepam in Tamil Nadu — lamps lit on hilltops!",
+        activity:"Light diyas, burst crackers, eat sweets, give gifts!",
+        crop:"🌾 Rabi sowing begins — farmers plant wheat for winter!",
+      },
+      {
+        name:"December", hindi:"दिसंबर", emoji:"🎪",
+        season:"Winter", seasonEmoji:"❄️",
+        bg:["#0d2040","#1a3568"],
+        temp:{north:"5–20°C", south:"20–30°C"},
+        rain:8, sun:7, humidity:62,
+        feel:"Cool & Festive! 🎊",
+        festivalName:"Christmas & New Year!", festivalEmoji:"🎄🎆",
+        fact:"Christmas in Goa and Kerala is absolutely magical! Churches light up, midnight mass, carol singing, and plum cake everywhere. December 31st — New Year parties across every city!",
+        funFact:"🏔️ Shimla and Manali get snow — skiing and snowman making!",
+        northFact:"Kashmir looks like a snow globe — everything covered in white!",
+        southFact:"Best beach weather in Goa — tourists from all over the world!",
+        activity:"Build snowmen in Himalayas, eat plum cake, countdown to New Year!",
+        crop:"🌾 Wheat growing tall in Punjab — green fields everywhere!",
+      },
+    ];
+
+    const SEASON_FILTERS = [
+      {label:"All",        value:"all",           emoji:"🗓️"},
+      {label:"Winter",     value:"Winter",        emoji:"❄️"},
+      {label:"Spring",     value:"Spring",        emoji:"🌸"},
+      {label:"Summer",     value:"Summer",        emoji:"🔥"},
+      {label:"Monsoon",    value:"Monsoon",       emoji:"🌧️"},
+      {label:"Festivals",  value:"festival",      emoji:"🪔"},
+    ];
+
+    function App() {
+      const [selected, setSelected]   = useState(null);
+      const [filter,   setFilter]     = useState("all");
+      const [floaters, setFloaters]   = useState([]);
+      const floaterTimerRef           = useRef(null);
+
+      function handleCardClick(m, e) {
+        e.stopPropagation();
+        setSelected(m);
+        clearTimeout(floaterTimerRef.current);
+        const newF = Array.from({length:10}, (_,i) => ({
+          id: Date.now()+i,
+          emoji: [m.emoji, m.festivalEmoji[0], m.seasonEmoji][i%3],
+          x: 5 + Math.random()*90,
+          size: 20 + Math.random()*22,
+          dur: 2.5 + Math.random()*1.5,
+          delay: i*0.08,
+          animClass: `floatUp${i%3}`,
+        }));
+        setFloaters(newF);
+        floaterTimerRef.current = setTimeout(() => setFloaters([]), 4500);
+      }
+
+      const appBg = selected
+        ? `linear-gradient(145deg, ${selected.bg[0]}, ${selected.bg[1]})`
+        : "linear-gradient(145deg, #1a0a2e, #2d1060, #0a2040)";
+
+      return (
+        <div className="app" style={{background: appBg, backgroundSize:"200% 200%", animation:"gradFlow 10s ease infinite"}}
+          onClick={() => setSelected(null)}>
+
+          <div className="india-deco">🇮🇳</div>
+
+          {/* Floating emojis */}
+          {floaters.map((f, i) => (
+            <div key={f.id} className="floater" style={{
+              left:`${f.x}%`,
+              fontSize:`${f.size}px`,
+              animation:`${f.animClass} ${f.dur}s ease-out forwards`,
+              animationDelay:`${f.delay}s`,
+              opacity:0,
+            }}>{f.emoji}</div>
+          ))}
+
+          {/* Header */}
+          <div className="header">
+            <div className="main-title">
+              <span style={{animationDelay:"0s"}}>🇮🇳</span>
+              {" "}India's Weather Calendar{" "}
+              <span style={{animationDelay:"0.3s"}}>☀️</span>
+            </div>
+            <div style={{marginTop:"0.3rem"}}>
+              <span className="subtitle">✨ Tap a month to discover India's amazing climate! ✨</span>
+            </div>
+          </div>
+
+          {/* Season filter */}
+          <div className="season-strip">
+            {SEASON_FILTERS.map(f => (
+              <button key={f.value}
+                className={`season-pill ${filter===f.value?"active":""}`}
+                onClick={(e) => { e.stopPropagation(); setFilter(f.value); }}>
+                {f.emoji} {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Month grid */}
+          <div className="month-grid">
+            {MONTHS.map((m, i) => {
+              const show = filter==="all" || filter==="festival" || m.season.includes(filter);
+              if (!show) return null;
+              const maxRain = 280;
+              const rainPct = Math.min(100,(m.rain/maxRain)*100);
+              const sunPct  = (m.sun/11)*100;
+              const humPct  = m.humidity;
+              return (
+                <div key={m.name}
+                  className={`month-card ${selected && selected.name===m.name?"selected":""}`}
+                  style={{
+                    background:`linear-gradient(145deg,${m.bg[0]},${m.bg[1]})`,
+                    animationDelay:`${i*0.07}s`,
+                  }}
+                  onClick={e => handleCardClick(m,e)}>
+
+                  <div className="card-glow"/>
+
+                  {m.rain > 100 && (
+                    <div className="rain-overlay">
+                      {Array.from({length:8}).map((_,j) => (
+                        <div key={j} className="raindrop-anim" style={{
+                          left:`${10+j*12}%`,
+                          animationDelay:`${j*0.13}s`,
+                          animationDuration:`${0.75+j*0.07}s`,
+                        }}/>
+                      ))}
+                    </div>
+                  )}
+
+                  <span className="month-emoji" style={{animationDelay:`${i*0.12}s`}}>{m.emoji}</span>
+                  <div className="month-name-en">{m.name}</div>
+                  <div className="month-name-hi">{m.hindi} · {m.seasonEmoji} {m.season}</div>
+
+                  <div className="temp-row">
+                    <span className="temp-badge">🏔️ {m.temp.north}</span>
+                    <span className="temp-badge">☀️ {m.temp.south}</span>
+                  </div>
+
+                  <div className="festival-tag">{m.festivalEmoji} {m.festivalName}</div>
+
+                  <div className="mini-stat">
+                    <span className="stat-icon">🌧️</span>
+                    <div className="stat-bar-track">
+                      <div className="stat-bar-fill" style={{width:`${rainPct}%`,background:"linear-gradient(90deg,#60b8ff,#c0e8ff)"}}/>
+                    </div>
+                    <span className="stat-val">{m.rain}mm</span>
+                  </div>
+
+                  <div className="mini-stat">
+                    <span className="stat-icon">☀️</span>
+                    <div className="stat-bar-track">
+                      <div className="stat-bar-fill" style={{width:`${sunPct}%`,background:"linear-gradient(90deg,#ffd700,#fff176)"}}/>
+                    </div>
+                    <span className="stat-val">{m.sun}h</span>
+                  </div>
+
+                  <div className="mini-stat">
+                    <span className="stat-icon">💧</span>
+                    <div className="stat-bar-track">
+                      <div className="stat-bar-fill" style={{width:`${humPct}%`,background:"linear-gradient(90deg,#80cbc4,#b2dfdb)"}}/>
+                    </div>
+                    <span className="stat-val">{m.humidity}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Modal */}
+          {selected && (
+            <div className="modal-overlay" onClick={() => setSelected(null)}>
+              <div className="modal"
+                style={{background:`linear-gradient(145deg,${selected.bg[0]},${selected.bg[1]})`}}
+                onClick={e => e.stopPropagation()}>
+
+                <span className="modal-emoji">{selected.emoji}</span>
+                <div className="modal-title">{selected.name}</div>
+                <div className="modal-hindi">{selected.hindi}</div>
+                <div className="modal-season">{selected.seasonEmoji} {selected.season} · {selected.feel}</div>
+
+                <div className="fact-box">💡 {selected.fact}</div>
+
+                <div className="detail-grid">
+                  <div className="detail-tile">
+                    <span className="tile-emoji">🏔️</span>
+                    <div className="tile-val" style={{fontSize:"0.95rem"}}>{selected.temp.north}</div>
+                    <div className="tile-label">North India</div>
+                  </div>
+                  <div className="detail-tile">
+                    <span className="tile-emoji">🌴</span>
+                    <div className="tile-val" style={{fontSize:"0.95rem"}}>{selected.temp.south}</div>
+                    <div className="tile-label">South India</div>
+                  </div>
+                  <div className="detail-tile">
+                    <span className="tile-emoji">🌧️</span>
+                    <div className="tile-val">{selected.rain}<span style={{fontSize:"0.8rem"}}>mm</span></div>
+                    <div className="tile-label">Rainfall</div>
+                  </div>
+                  <div className="detail-tile">
+                    <span className="tile-emoji">☀️</span>
+                    <div className="tile-val">{selected.sun}<span style={{fontSize:"0.8rem"}}>h</span></div>
+                    <div className="tile-label">Daily Sun</div>
+                  </div>
+                  <div className="detail-tile">
+                    <span className="tile-emoji">💧</span>
+                    <div className="tile-val">{selected.humidity}<span style={{fontSize:"0.8rem"}}>%</span></div>
+                    <div className="tile-label">Humidity</div>
+                  </div>
+                  <div className="detail-tile">
+                    <span className="tile-emoji">{selected.festivalEmoji[0]}</span>
+                    <div className="tile-val" style={{fontSize:"0.75rem",paddingTop:"0.2rem",lineHeight:1.3}}>{selected.festivalName}</div>
+                    <div className="tile-label">Festival</div>
+                  </div>
+                </div>
+
+                <div className="region-row">
+                  <div className="region-title">🏛️ North India</div>
+                  <div className="region-text">{selected.northFact}</div>
+                </div>
+
+                <div className="region-row">
+                  <div className="region-title">🌴 South India</div>
+                  <div className="region-text">{selected.southFact}</div>
+                </div>
+
+                <div className="activity-box">
+                  <div className="activity-title">🎯 Fun Things To Do This Month!</div>
+                  <div className="activity-text">{selected.activity}</div>
+                </div>
+
+                <div className="region-row" style={{marginBottom:"0.9rem"}}>
+                  <div className="region-title">🌾 Farmers & Crops</div>
+                  <div className="region-text">{selected.crop}</div>
+                </div>
+
+                <div className="fact-box" style={{background:"rgba(255,220,0,0.18)",borderColor:"rgba(255,220,0,0.35)"}}>
+                  🌟 {selected.funFact}
+                </div>
+
+                <button className="close-modal" onClick={() => setSelected(null)}>
+                  🌸 Close — Go Back to Calendar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
